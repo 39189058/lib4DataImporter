@@ -1,6 +1,9 @@
 package com.qlmsoft.lib4.dataimporter;
 
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.text.MessageFormat;
 import java.util.Iterator;
 import java.util.List;
@@ -16,7 +19,7 @@ import com.google.common.collect.Lists;
 public class ParseDicFromWord {
 	
 	static String SQLTEMP = "INSERT INTO [dbo].[sys_dict] ([id], [value], [label], [type], [description], [sort], [parent_id], [create_by], [create_date], [update_by], [update_date], [del_flag],[ext1],[ext2],[ext3],[ext4],[ext5])" 
-	+"VALUES ({0}, {1}, {2}, {3}, '', {4}, '0', '1', now(), '1', now(),  '0',{5},{6},{7},{8},{9});";
+	+"VALUES ({0}, {1}, {2}, {3}, {4}, {5},'0', '1', GETDATE(), '1', GETDATE(),  '0',{6},{7},{8},{9},{10});";
 	
 	static MessageFormat messageFormat = new MessageFormat(SQLTEMP);
 
@@ -69,7 +72,7 @@ public class ParseDicFromWord {
 					}
 				}
 				
-				
+				BufferedWriter writer = new BufferedWriter(new FileWriter(new File("G:\\sys_dict.txt"), true));
 				
 				Iterator<XWPFTable> it = xwpf.getTablesIterator();// 得到word中的表格
 				
@@ -106,6 +109,9 @@ public class ParseDicFromWord {
 					
 					System.out.println("delete from sys_dict where type='"+tablename+"';");
 					
+					writer.append("/*"+tablename+"*/\n");
+					writer.append("delete from sys_dict where type='"+tablename+"';\n");
+					
 					String sql = "";
 					// 读取每一行数据, 从1开始，过滤第一行
 					for (int i = 1; i < rows.size(); i++) {
@@ -115,11 +121,9 @@ public class ParseDicFromWord {
 						
 						sql = genClause(cells, tablename, tablehint);	
 						
-						System.out.println(sql);
+						writer.append(sql+"\n");
 
 					}
-					
-					System.out.println("");
 					
 					tableIndex ++;
 					
@@ -128,6 +132,8 @@ public class ParseDicFromWord {
 					}
 					
 				}
+				
+				writer.close();
 				
 			} else {
 				//
@@ -152,7 +158,7 @@ public class ParseDicFromWord {
 	}
 	
 	private static String handleStr(String str){
-		return str.trim().replaceAll("　", "");
+		return str.trim().replaceAll("　", "").replaceAll("\\*", "");
 	}
 	
 	private static String genClause(List<XWPFTableCell> cells, String tablename, String tablehint){
